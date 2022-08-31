@@ -1,6 +1,6 @@
 from flask import Flask
 from flask import request
-import  secrets
+import secrets
 from oauthlib.oauth2 import WebApplicationClient
 import json
 import urllib
@@ -8,6 +8,7 @@ import requests
 import sqlite3
 import dotenv
 import os
+import pandas as pd
 
 #AUTHORIZATION SET UP
 dotenv.load_dotenv()
@@ -75,16 +76,41 @@ def print_user_info(access_token: str):
     print(f"\n>>> Greetings {user['name']}! <<<")
 # Method to retrieve user's anime list
 def get_user_list(access_token: str):
-    url = 'https://api.myanimelist.net/v2/users/@me/animelist' 
+    
+    url = "https://api.myanimelist.net/v2/users/@me/animelist?fields=id,genres,mean&nsfw=1&limit=10&offset=0"
     response = requests.get(url, headers = {
         'Authorization': f'Bearer {access_token}'
-        })
+    })
 
     response.raise_for_status()
     user_list = response.json()
     response.close()
 
-    print(user_list)
+    return user_list
+
+def get_entire_user_list(access_token: str):
+    loops = 0
+    big_list = []
+    while(True):
+        url = "https://api.myanimelist.net/v2/users/@me/animelist?fields=id,genres,mean&nsfw=1&limit=100&offset=" + str(loops * 10)
+        response = requests.get(url, headers = {
+            'Authorization': f'Bearer {access_token}'
+            })
+
+        response.raise_for_status()
+        user_list = response.json()
+        response.close()
+
+        try:
+            for i in range(100):
+                big_list.append(user_list["data"][i])
+        except(IndexError):
+            break
+    
+        loops = loops + 1
+
+        return big_list
+    
 # Main
    
 # Create flask website 
@@ -106,6 +132,21 @@ def oauth2():
     authorisation_code = request.args.get('code')
     token = generate_new_token(authorisation_code, code_verifier)
     # print_user_info(token['access_token'])
-    get_user_list(token['access_token'])
+    #print(get_user_list(token['access_token']))
+
+    user_list = get_user_list(token['access_token'])
+    
+    Y = pd.DataFrame()
+
+    big_list = []
+    for anime in user_list["data"]:
+        genre_list = []
+        genres = anime["node"]["genres"]
+        for genre in genres:
+            genre_list.append(genre["name"])
+        big_list.append(genre_list)
+
+    X = pd.DataFrame(big_list)
+    print(X)
 
     return 'redirect link for authorization'
