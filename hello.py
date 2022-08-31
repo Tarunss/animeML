@@ -8,6 +8,8 @@ import requests
 import sqlite3
 import dotenv
 import os
+import pandas as pd
+import numpy as np
 
 #AUTHORIZATION SET UP
 dotenv.load_dotenv()
@@ -49,7 +51,7 @@ def generate_new_token(authorization_code: str, code_verifier: str) -> dict:
     body =urllib.parse.parse_qsl(data)
     token_url = 'https://myanimelist.net/v1/oauth2/token'
     response = requests.post(token_url,body)
-    print(response.content)
+    #print(response.content)
     # Check for any errors
     response.raise_for_status()
     response.close()
@@ -57,7 +59,7 @@ def generate_new_token(authorization_code: str, code_verifier: str) -> dict:
     # Dump dictionary info into a json file, and return it
     with open('token.json', 'w') as file:
         json.dump(client.token, file, indent = 4)
-        print('Token saved in "token.json"')
+        #print('Token saved in "token.json"')
     
     return client.token
 
@@ -75,7 +77,7 @@ def print_user_info(access_token: str):
     print(f"\n>>> Greetings {user['name']}! <<<")
 # Method to retrieve user's anime list
 def get_user_list(access_token: str):
-    url = 'https://api.myanimelist.net/v2/users/@me/animelist' 
+    url = 'https://api.myanimelist.net/v2/users/@me/animelist?fields=genres,mean&nsfw=1&limit=10&offset=0' 
     response = requests.get(url, headers = {
         'Authorization': f'Bearer {access_token}'
         })
@@ -84,7 +86,7 @@ def get_user_list(access_token: str):
     user_list = response.json()
     response.close()
 
-    print(user_list)
+    return user_list
 # Main
    
 # Create flask website 
@@ -106,6 +108,26 @@ def oauth2():
     authorisation_code = request.args.get('code')
     token = generate_new_token(authorisation_code, code_verifier)
     # print_user_info(token['access_token'])
-    get_user_list(token['access_token'])
 
+    # Obtain the user's list for website
+    user_list = get_user_list(token['access_token'])
+    
+    # initialize dataframe 
+    Y = pd.DataFrame()
+    #print(len(user_list["data"]))
+    big_list = []
+    for anime in user_list["data"]:
+        genre_list = []
+        genres = anime["node"]["genres"]
+        for genre in genres:
+            genre_list.append(genre["name"])
+        big_list.append(genre_list)
+
+    X = pd.DataFrame(big_list)
+    print(X)
+    #X.append(genre_list)
+    # genre_series = pd.Series(genre_list)
+    # X.append(genre_series,ignore_index=True)
+    # print(X)
+    #put shit in dataframe
     return 'redirect link for authorization'
