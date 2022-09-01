@@ -167,10 +167,11 @@ def process_data(token):
 
     num_anime = len(user_list["data"])
     for _ in range(num_anime):
-        anime_list.append([0 for x in range(num_genres)])
+        anime_list.append([0 for _ in range(num_genres)])
     
     X = pd.DataFrame(anime_list)
     X.columns = big_genre_list
+    Y = pd.DataFrame([0 for _ in range(num_anime)])
 
     index = 0
     for anime in user_list["data"]:
@@ -181,10 +182,8 @@ def process_data(token):
         
         #zero set
         X.loc[index][genre_list] = 1
-        #ratings.append(anime["node"]["mean"])
+        Y.loc[index] = anime["node"]["mean"]
         index = index + 1
 
-    #put shit in dataframe
-    #Y = pd.DataFrame(ratings)
     print(X)
-    #print(Y)
+    print(Y)
