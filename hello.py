@@ -135,7 +135,6 @@ def login():
 
     return 'redirect link for logging in'
 
-
 @app.route('/authorization')
 def oauth2():
     # 
@@ -149,18 +148,43 @@ def oauth2():
 def process_data(token):
     user_list = get_user_list(token['access_token'])
 
+    big_genre_set = set(())
+
     big_list = []
     ratings = []
+
     for anime in user_list["data"]:
-        genre_list = []
+        for genre in anime["node"]["genres"]:
+            big_genre_set.add(genre["name"])
+
+    num_genres = len(big_genre_set)
+    
+    big_genre_list = []
+    for genre in big_genre_set:
+        big_genre_list.append(genre)
+    
+    anime_list = []
+
+    num_anime = len(user_list["data"])
+    for _ in range(num_anime):
+        anime_list.append([0 for x in range(num_genres)])
+    
+    X = pd.DataFrame(anime_list)
+    X.columns = big_genre_list
+
+    index = 0
+    for anime in user_list["data"]:
         genres = anime["node"]["genres"]
+        genre_list = []
         for genre in genres:
             genre_list.append(genre["name"])
-        big_list.append(genre_list)
-        ratings.append(anime["node"]["mean"])
+        
+        #zero set
+        X.loc[index][genre_list] = 1
+        #ratings.append(anime["node"]["mean"])
+        index = index + 1
 
     #put shit in dataframe
-    X = pd.DataFrame(big_list)
-    Y = pd.DataFrame(ratings)
+    #Y = pd.DataFrame(ratings)
     print(X)
-    print(Y)
+    #print(Y)
