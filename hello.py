@@ -123,37 +123,44 @@ app = Flask(__name__)
 def homepage():
     #Perform OAUTH2.0 on main page (Will change the "here" hyperlink to an auth)
     authurl = prepare_authorization_url(code_challenge)
-    return """
-    Click
-    <a href=%s>world</a>
-    """%authurl
+    loginurl = "http://127.0.0.1:5000/login"
+    return """<a href=%s>New User</a> or <a href=%s>Login</a>"""%(authurl,loginurl)
+
+@app.route('/login')
+def login():
+    token = None
+    with open('token.json', 'r') as file:
+        token = json.load(file)
+    process_data(token)
+
+    return 'redirect link for logging in'
+
 
 @app.route('/authorization')
 def oauth2():
     # 
     authorisation_code = request.args.get('code')
     token = generate_new_token(authorisation_code, code_verifier)
-    # print_user_info(token['access_token'])
-    #print(get_user_list(token['access_token']))
+    process_data(token)
 
+    return 'redirect link for authorization'
+
+
+def process_data(token):
     user_list = get_user_list(token['access_token'])
-    
-    # initialize dataframe 
-    Y = pd.DataFrame()
-    #print(len(user_list["data"]))
+
     big_list = []
+    ratings = []
     for anime in user_list["data"]:
         genre_list = []
         genres = anime["node"]["genres"]
         for genre in genres:
             genre_list.append(genre["name"])
         big_list.append(genre_list)
+        ratings.append(anime["node"]["mean"])
 
-    X = pd.DataFrame(big_list)
-    print(X)
-    #X.append(genre_list)
-    # genre_series = pd.Series(genre_list)
-    # X.append(genre_series,ignore_index=True)
-    # print(X)
     #put shit in dataframe
-    return 'redirect link for authorization'
+    X = pd.DataFrame(big_list)
+    Y = pd.DataFrame(ratings)
+    print(X)
+    print(Y)
