@@ -138,22 +138,6 @@ def oauth2():
 
     user_list = get_user_list(token['access_token'])
     
-    Y = pd.DataFrame()
-
-    big_list = []
-    for anime in user_list["data"]:
-        genre_list = []
-        genres = anime["node"]["genres"]
-        for genre in genres:
-            genre_list.append(genre["name"])
-        big_list.append(genre_list)
-
-    X = pd.DataFrame(big_list)
-    print(X)
-    
-    # Obtain the user's list for website
-    user_list = get_user_list(token['access_token'])
-    
     # initialize dataframe 
     Y = pd.DataFrame()
     #print(len(user_list["data"]))
