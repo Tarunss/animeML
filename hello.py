@@ -10,12 +10,14 @@ import dotenv
 import os
 import pandas as pd
 import numpy as np
+import html_data
 
 #AUTHORIZATION SET UP
 dotenv.load_dotenv()
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 client = WebApplicationClient(CLIENT_ID)
+token = None
 #methods to act on this client
 
 # 1. Generate a new Code Verifier / Code Challenge.
@@ -128,21 +130,28 @@ def homepage():
 
 @app.route('/login')
 def login():
-    token = None
     with open('token.json', 'r') as file:
+        global token
         token = json.load(file)
-    process_data(token)
 
-    return 'redirect link for logging in'
+    return html_data.LOGIN
 
 @app.route('/authorization')
 def oauth2():
     # 
     authorisation_code = request.args.get('code')
+    global token
     token = generate_new_token(authorisation_code, code_verifier)
+
+    return html_data.AUTHORIZED
+
+@app.route('/me')
+def user_page():
+
+    global token
     process_data(token)
 
-    return 'redirect link for authorization'
+    return html_data.USER_HOME
 
 
 def process_data(token):
